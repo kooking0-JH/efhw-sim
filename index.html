@@ -78,6 +78,8 @@
   .canvas-wrap { position: relative; width: 100%; height: 320px; background: #fff; border-radius: 8px; border: 2px solid #e2e8f0; overflow: hidden; }
   /* pan-y: 캔버스 위에서도 세로 스크롤 가능. 모바일은 탭으로 마커 이동, 마우스는 드래그 가능 */
   canvas { width: 100%; height: 100%; display: block; touch-action: pan-y; }
+  /* 극좌표 차트는 상하·좌우 어느 방향으로 끌어도 각도가 바뀌므로, 차트 위 터치는 스크롤 대신 마커 이동에 사용 */
+  #elCanvas, #azCanvas { touch-action: none; }
   .legend { display: flex; gap: 14px; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-top: 10px; flex-wrap: wrap; align-items: center; }
   .legend span { display: flex; align-items: center; gap: 6px; }
   .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
@@ -1039,14 +1041,18 @@ function resetMarkersAndUpdate(changedKey) {
  * 스크롤이 시작되면 마커는 건드리지 않습니다.
  */
 function bindCanvasPointer(canvas, handler) {
+  const touchDrag = getComputedStyle(canvas).touchAction === "none";
   canvas.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse") { if (e.button === 0) handler(e); }
+    if (e.pointerType === "mouse") { if (e.button !== 0) return; }
+    else if (!touchDrag) return;
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    handler(e);
   });
   canvas.addEventListener("pointermove", (e) => {
     if (e.buttons === 1) handler(e);
   });
   canvas.addEventListener("pointerup", (e) => {
-    if (e.pointerType !== "mouse") handler(e);
+    if (e.pointerType !== "mouse" && !touchDrag) handler(e);
   });
 }
 

@@ -54,6 +54,15 @@
   .slider-val { width: 55px; text-align: right; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; font-size: 1.05rem; }
   .geo-summary { font-size: 0.9rem; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--border); display: flex; justify-content: space-between; font-weight: 600; }
 
+  /* ---------- 설정 + 측면도 (좌우 배치) ---------- */
+  .setup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+  @media (max-width: 920px) { .setup-grid { grid-template-columns: 1fr; } }
+  .slider-card { display: flex; flex-direction: column; }
+  .slider-card .slider-box { flex: 1; justify-content: center; gap: 26px; }
+  .setup-grid .canvas-wrap { height: 260px; }
+  .slider-card .geo-summary { flex-wrap: wrap; gap: 4px 12px; }
+  @media (max-width: 600px) { .slider-label { min-width: 100px; } }
+
   /* ---------- KPI ---------- */
   .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   @media (max-width: 850px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -144,37 +153,52 @@
   </div>
 
   <!-- ===================== 슬라이더 ===================== -->
+  <div class="setup-grid">
+  <div class="card slider-card">
+      <div class="card-title">
+        <span>4. 지상고 및 가설 제원 설정</span>
+        <span id="slope-badge" style="color:var(--accent);">정점 사잇각: —</span>
+      </div>
+      <div class="slider-box">
+        <div class="slider-item" id="row-h1">
+          <span class="slider-label">급전점 높이 (H1)</span>
+          <input type="range" id="h1-slider" min="0.5" max="15" step="0.5" value="1.5">
+          <span class="slider-val" id="h1-val">1.5m</span>
+        </div>
+        <div class="slider-item" id="row-hmid">
+          <span class="slider-label">중앙 정점 (H_mid)</span>
+          <input type="range" id="hmid-slider" min="0.5" max="15" step="0.5" value="6.0">
+          <span class="slider-val" id="hmid-val">6.0m</span>
+        </div>
+        <div class="slider-item" id="row-h2">
+          <span class="slider-label">끝단 높이 (H2)</span>
+          <input type="range" id="h2-slider" min="0.5" max="15" step="0.5" value="1.5">
+          <span class="slider-val" id="h2-val">1.5m</span>
+        </div>
+        <div class="slider-item" id="row-lvert" style="display:none;">
+          <span class="slider-label">수직 구간 (L_vert)</span>
+          <input type="range" id="lvert-slider" min="2.0" max="8.0" step="0.5" value="5.0">
+          <span class="slider-val" id="lvert-val">5.0m</span>
+        </div>
+      </div>
+      <div class="geo-summary">
+        <span id="geo-span-text">수평 폭: 18.1m</span>
+        <span id="geo-hl-text">평균 지상고: 0.09λ (3.8m)</span>
+      </div>
+    </div>
   <div class="card">
     <div class="card-title">
-      <span>4. 지상고 및 가설 제원 설정</span>
-      <span id="slope-badge" style="color:var(--accent);">정점 사잇각: —</span>
+      <span>가설 측면도 (X-Z Plane) 및 전류/위상 분포</span>
+      <span style="color:var(--muted); font-size:0.85rem;">총길이 20.20m</span>
     </div>
-    <div class="slider-box">
-      <div class="slider-item" id="row-h1">
-        <span class="slider-label">급전점 높이 (H1)</span>
-        <input type="range" id="h1-slider" min="0.5" max="15" step="0.5" value="1.5">
-        <span class="slider-val" id="h1-val">1.5m</span>
-      </div>
-      <div class="slider-item" id="row-hmid">
-        <span class="slider-label">중앙 정점 (H_mid)</span>
-        <input type="range" id="hmid-slider" min="0.5" max="15" step="0.5" value="6.0">
-        <span class="slider-val" id="hmid-val">6.0m</span>
-      </div>
-      <div class="slider-item" id="row-h2">
-        <span class="slider-label">끝단 높이 (H2)</span>
-        <input type="range" id="h2-slider" min="0.5" max="15" step="0.5" value="1.5">
-        <span class="slider-val" id="h2-val">1.5m</span>
-      </div>
-      <div class="slider-item" id="row-lvert" style="display:none;">
-        <span class="slider-label">수직 구간 (L_vert)</span>
-        <input type="range" id="lvert-slider" min="2.0" max="8.0" step="0.5" value="5.0">
-        <span class="slider-val" id="lvert-val">5.0m</span>
-      </div>
+    <div class="canvas-wrap"><canvas id="geoCanvas"></canvas></div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--wire)"></i>와이어</span>
+      <span><i class="dot" style="background:var(--current)"></i>전류 |I(s)| 및 위상</span>
+      <span><i class="dot" style="background:var(--accent)"></i>49:1 급전</span>
+      <span><i class="dot" style="background:var(--muted)"></i>카운터포이즈</span>
     </div>
-    <div class="geo-summary">
-      <span id="geo-span-text">수평 폭: 18.1m</span>
-      <span id="geo-hl-text">평균 지상고: 0.09λ (3.8m)</span>
-    </div>
+  </div>
   </div>
 
   <!-- ===================== KPI ===================== -->
@@ -203,20 +227,6 @@
 
   <!-- ===================== 차트 4종 ===================== -->
   <div class="vis-grid">
-    <div class="card">
-      <div class="card-title">
-        <span>가설 측면도 (X-Z Plane) 및 전류/위상 분포</span>
-        <span style="color:var(--muted); font-size:0.85rem;">총길이 20.20m</span>
-      </div>
-      <div class="canvas-wrap"><canvas id="geoCanvas"></canvas></div>
-      <div class="legend">
-        <span><i class="dot" style="background:var(--wire)"></i>와이어</span>
-        <span><i class="dot" style="background:var(--current)"></i>전류 |I(s)| 및 위상</span>
-        <span><i class="dot" style="background:var(--accent)"></i>49:1 급전</span>
-        <span><i class="dot" style="background:var(--muted)"></i>카운터포이즈</span>
-      </div>
-    </div>
-
     <div class="card" style="border-color: var(--accent); background: #f8fafc;">
       <div class="card-title">
         <span>수직 발사각 탐색 (클릭/드래그 시 앙각별 이득 표시)</span>
@@ -241,7 +251,7 @@
       </div>
     </div>
 
-    <div class="card" style="border-color: var(--swr); background: #fdfaef;">
+    <div class="card" style="border-color: var(--swr); background: #fdfaef; grid-column: 1 / -1;">
       <div class="card-title">
         <span>주파수별 VSWR 추정 곡선 (클릭/드래그로 주파수 탐색)</span>
         <span id="swr-ref-label" style="font-size:0.85rem;color:var(--swr);">Min SWR: 1.15 @ 7.07 MHz</span>

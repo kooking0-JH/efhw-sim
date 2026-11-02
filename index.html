@@ -1033,10 +1033,21 @@ function resetMarkersAndUpdate(changedKey) {
 // 7. 이벤트 바인딩
 // =====================================================================
 
-/** 클릭 + 마우스 드래그로 마커 이동 (터치는 탭만 → 페이지 스크롤 유지) */
+/**
+ * 마커 이동: 마우스는 클릭·드래그, 터치는 탭과 좌우 드래그.
+ * 터치에서 세로 이동은 페이지 스크롤로 넘어가도록(touch-action: pan-y) 두고,
+ * 스크롤이 시작되면 마커는 건드리지 않습니다.
+ */
 function bindCanvasPointer(canvas, handler) {
-  canvas.addEventListener("click", handler);
-  canvas.addEventListener("mousemove", (e) => { if (e.buttons === 1) handler(e); });
+  canvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse") { if (e.button === 0) handler(e); }
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (e.buttons === 1) handler(e);
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    if (e.pointerType !== "mouse") handler(e);
+  });
 }
 
 function canvasPos(e, canvas) {

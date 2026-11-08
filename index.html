@@ -80,6 +80,13 @@
   canvas { width: 100%; height: 100%; display: block; touch-action: pan-y; }
   /* 극좌표 차트는 상하·좌우 어느 방향으로 끌어도 각도가 바뀌므로, 차트 위 터치는 스크롤 대신 마커 이동에 사용 */
   #elCanvas, #azCanvas { touch-action: none; }
+  /* 3D 패턴: 터치에서는 좌우 드래그만 회전, 세로 스와이프는 페이지 스크롤 */
+  #patCanvas { touch-action: pan-y; cursor: grab; }
+  #patCanvas.dragging { cursor: grabbing; }
+  .canvas-wrap.tall { height: 420px; }
+  @media (max-width: 600px) { .canvas-wrap.tall { height: 340px; } }
+  .view-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .view-btns button { padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; border-width: 1.5px; }
   .legend { display: flex; gap: 14px; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-top: 10px; flex-wrap: wrap; align-items: center; }
   .legend span { display: flex; align-items: center; gap: 6px; }
   .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
@@ -227,6 +234,26 @@
     </div>
   </div>
 
+  <!-- ===================== 3D 방사 패턴 ===================== -->
+  <div class="card" style="border-color: #475569;">
+    <div class="card-title">
+      <span>3D 방사 패턴 (드래그로 회전)</span>
+      <div class="view-btns" id="view3d-buttons">
+        <button data-pitch="5">측면</button>
+        <button data-pitch="30">사선</button>
+        <button data-pitch="85">위에서</button>
+        <button data-reset="1">초기화</button>
+      </div>
+    </div>
+    <div class="canvas-wrap tall"><canvas id="patCanvas"></canvas></div>
+    <div class="legend">
+      <span><i class="dot" style="background:#1d4ed8"></i>수직 단면 위치 (아래 앙각 차트)</span>
+      <span><i class="dot" style="background:#15803d"></i>수평 단면 위치 (아래 방위각 차트)</span>
+      <span><i class="dot" style="background:var(--current)"></i>2D 차트에서 고른 마커</span>
+      <span><i class="dot" style="background:var(--wire)"></i>와이어 (형태 확인용 · 축척 별도)</span>
+    </div>
+  </div>
+
   <!-- ===================== 차트 4종 ===================== -->
   <div class="vis-grid">
     <div class="card" style="border-color: var(--accent); background: #f8fafc;">
@@ -312,6 +339,7 @@
       <li><strong>단부 효과:</strong> 방사 패턴 계산에는 미반영. SWR 곡선에는 고조파 공진점이 기본파의 정수배보다 높아지는 경향을 경험적으로 반영.</li>
       <li><strong>미반영:</strong> 49:1 Unun 손실, 급전선·카운터포이즈 공통모드 전류, 주변 물체.</li>
       <li><strong>차트:</strong> 수직 단면은 수평 단면의 최대 방위각을 지나는 평면입니다. 주 발사각이 60°를 넘으면 이 평면이 3D 최대점을 지나지 않을 수 있어, 단면의 Peak 각도·이득은 KPI 값과 약간 다를 수 있습니다.</li>
+      <li><strong>3D 패턴:</strong> 2D 차트와 같은 계산값(앙각 2° × 방위 5° 격자)을 전체 최대 대비 상대 dB로 표시(-30 dB 하한). 와이어는 형태 확인용으로 축척을 따로 맞춰 겹쳐 그린 것입니다.</li>
       <li><strong>수치:</strong> 이득은 지상고·대지별 경험 보정 포함. VSWR은 경험적 곡선 기반 추정(기준 2450Ω). 모두 설치 조건 간 비교용.</li>
     </ul>
   </details>
@@ -485,12 +513,20 @@ function compute3DRadiation(geo, freqMHz) {
   const fresnelTable = Array.from({ length: 46 }, (_, e) =>
     calcFresnel(deg2rad(Math.max(1, e * 2)), freqMHz));
 
+  // 3D 표시용 격자 (행 e: 앙각 2e°, 행 0은 지평선 0.5°, 열 a: 방위 5a°)
+  const grid3D = new Float32Array(46 * 72);
+  const horizonFresnel = calcFresnel(deg2rad(0.5), freqMHz);
+  for (let a = 0; a < 72; a++) {
+    grid3D[a] = evalFieldPower(segData, deg2rad(0.5), deg2rad(a * 5), horizonFresnel);
+  }
+
   let maxP = 0, bestElDeg = 45, bestAzDeg = 90, sumP = 0;
   for (let e = 1; e <= 45; e++) {
     const psiRad = deg2rad(e * 2);
     const cosPsi = Math.cos(psiRad);
     for (let a = 0; a < 72; a++) {
       const p = evalFieldPower(segData, psiRad, deg2rad(a * 5), fresnelTable[e]);
+      grid3D[e * 72 + a] = p;
       sumP += p * cosPsi * (Math.PI / 90) * (Math.PI / 36);       // 고체각 가중
       if (p > maxP) { maxP = p; bestElDeg = e * 2; bestAzDeg = a * 5; }
     }
@@ -536,7 +572,7 @@ function compute3DRadiation(geo, freqMHz) {
     gainDbi, maxP,                                   // maxP: 마커 dBi 계산용 전체 최대값
     toaDeg: bestElDeg, bestAzDeg: cutPeakAzDeg, azCutElDeg,   // bestAzDeg: 수평 단면의 최대 방위각
     azMaxToMinDb: 10 * Math.log10(maxAzCutP / Math.max(1e-9, minAzCutP)),
-    elCut, maxElCutP, elCutPeakDeg, azCut, maxAzCutP,
+    elCut, maxElCutP, elCutPeakDeg, azCut, maxAzCutP, grid3D,
     wl: segData.wl, freqMHz
   };
 }
@@ -869,6 +905,220 @@ function drawAzimuth(rad) {
   }
 }
 
+// =====================================================================
+// 5-1. 3D 방사 패턴 (라이브러리 없이 Canvas 2D 투영)
+// =====================================================================
+const VIEW3D_DEFAULT = { yaw: -35, pitch: 25 };          // 도 단위
+const view3d = { ...VIEW3D_DEFAULT };
+let currentGeo = null;                                   // 마지막 지오메트리 (3D 재그리기용)
+
+/** 상대 dB(-30~0) → RGB (2D 차트와 같은 계열: 파랑 → 초록 → 주황 → 빨강) */
+const DB_STOPS = [
+  [-30, [30, 58, 138]], [-20, [37, 99, 235]], [-12, [20, 184, 166]],
+  [-6, [234, 179, 8]], [-3, [249, 115, 22]], [0, [220, 38, 38]]
+];
+function dbColor(db) {
+  db = clamp(db, -30, 0);
+  for (let i = 0; i < DB_STOPS.length - 1; i++) {
+    const [d0, c0] = DB_STOPS[i], [d1, c1] = DB_STOPS[i + 1];
+    if (db <= d1) {
+      const t = (db - d0) / (d1 - d0);
+      return c0.map((v, k) => v + t * (c1[k] - v));
+    }
+  }
+  return DB_STOPS[DB_STOPS.length - 1][1];
+}
+
+/** 3D 패턴 그리기: 상반구 격자(앙각 2° × 방위 5°)를 면으로 이어 깊이 순서대로 칠함 */
+function draw3D(rad, geo) {
+  if (!rad || !rad.grid3D) return;
+  const { ctx, w, h } = setupCanvas("patCanvas");
+  const yaw = deg2rad(view3d.yaw), pitch = deg2rad(view3d.pitch);
+  const cyw = Math.cos(yaw), syw = Math.sin(yaw);
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+
+  // 화면에 들어가도록 반지름·중심 결정 (반구 높이 R·cosp + 지면 앞쪽 R·sinp)
+  const R = Math.min(w * 0.4, (h - 70) / (cp + sp) * 0.9);
+  const cx = w / 2;
+  const cy = 34 + R * cp + (h - 70 - R * (cp + sp)) / 2;
+  const D = R * 6;                                        // 약한 원근
+
+  // 월드(x: 와이어 방향, y: 측면, z: 위) → 뷰(vx: 오른쪽, vy: 위, vz: 카메라 쪽) → 화면
+  const toView = (x, y, z) => {
+    const x1 = x * cyw - y * syw, y1 = x * syw + y * cyw;
+    return { vx: x1, vy: y1 * sp + z * cp, vz: -y1 * cp + z * sp };
+  };
+  const toScreen = (v) => {
+    const f = D / (D - v.vz);
+    return { sx: cx + v.vx * f, sy: cy - v.vy * f, vz: v.vz };
+  };
+  const proj = (x, y, z) => toScreen(toView(x, y, z));
+  const sph = (psiDeg, phiDeg, r) => {
+    const psi = deg2rad(psiDeg), phi = deg2rad(phiDeg);
+    return [r * Math.cos(psi) * Math.cos(phi), r * Math.cos(psi) * Math.sin(phi), r * Math.sin(psi)];
+  };
+  const relDb = (p) => clamp(10 * Math.log10(Math.max(1e-12, p) / rad.maxP), -30, 0);
+
+  // ---- 지면 (반지름 R 원판 + -10/-20 dB 링 + 30° 방사선) ----
+  const ring = (r) => {
+    ctx.beginPath();
+    for (let d = 0; d <= 360; d += 5) {
+      const s = proj(r * Math.cos(deg2rad(d)), r * Math.sin(deg2rad(d)), 0);
+      if (d === 0) ctx.moveTo(s.sx, s.sy); else ctx.lineTo(s.sx, s.sy);
+    }
+    ctx.closePath();
+  };
+  ring(R);
+  ctx.fillStyle = "rgba(22, 163, 74, 0.07)"; ctx.fill();
+  ctx.strokeStyle = "rgba(22, 163, 74, 0.55)"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.setLineDash([3, 4]); ctx.strokeStyle = "rgba(100, 116, 139, 0.45)"; ctx.lineWidth = 1;
+  [20 / 30, 10 / 30].forEach(k => { ring(R * k); ctx.stroke(); });
+  for (let d = 0; d < 360; d += 30) {
+    const a = proj(0, 0, 0), b = proj(R * Math.cos(deg2rad(d)), R * Math.sin(deg2rad(d)), 0);
+    ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // ---- 패턴 격자 점 (행 e: 앙각, 열 a: 방위 5°) ----
+  const NA = 72, NE = 46;
+  const pts = new Array(NE * NA);
+  for (let e = 0; e < NE; e++) {
+    const psiDeg = e === 0 ? 0 : e * 2;
+    for (let a = 0; a < NA; a++) {
+      const p = rad.grid3D[e * NA + a];
+      const r = dbToRadius(p, rad.maxP, R, 30);
+      const [x, y, z] = sph(psiDeg, a * 5, r);
+      const v = toView(x, y, z);
+      pts[e * NA + a] = { v, s: toScreen(v), db: relDb(p) };
+    }
+  }
+
+  // ---- 면 생성 → 깊이 정렬(먼 것부터) → 칠하기 ----
+  const L = (() => { const l = [-0.35, 0.65, 0.68]; const n = Math.hypot(...l); return l.map(c => c / n); })();
+  const faces = [];
+  for (let e = 0; e < NE - 1; e++) {
+    for (let a = 0; a < NA; a++) {
+      const q = [pts[e * NA + a], pts[e * NA + (a + 1) % NA], pts[(e + 1) * NA + (a + 1) % NA], pts[(e + 1) * NA + a]];
+      // 법선(뷰 좌표) → 간단한 램버트 명암
+      const ax = q[2].v.vx - q[0].v.vx, ay = q[2].v.vy - q[0].v.vy, az = q[2].v.vz - q[0].v.vz;
+      const bx = q[3].v.vx - q[1].v.vx, by = q[3].v.vy - q[1].v.vy, bz = q[3].v.vz - q[1].v.vz;
+      let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+      const nl = Math.hypot(nx, ny, nz);
+      let shade = 0.8;
+      if (nl > 1e-9) {
+        nx /= nl; ny /= nl; nz /= nl;
+        const mx = (q[0].v.vx + q[2].v.vx) / 2, my = (q[0].v.vy + q[2].v.vy) / 2, mz = (q[0].v.vz + q[2].v.vz) / 2;
+        if (nx * mx + ny * my + nz * mz < 0) { nx = -nx; ny = -ny; nz = -nz; }   // 바깥쪽으로
+        shade = 0.55 + 0.45 * Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]);
+      }
+      const depth = (q[0].v.vz + q[1].v.vz + q[2].v.vz + q[3].v.vz) / 4;
+      const db = (q[0].db + q[1].db + q[2].db + q[3].db) / 4;
+      faces.push({ q, depth, db, shade });
+    }
+  }
+  faces.sort((f1, f2) => f1.depth - f2.depth);
+  ctx.lineWidth = 0.7; ctx.lineJoin = "round";
+  for (const f of faces) {
+    const [r, g, b] = dbColor(f.db).map(c => Math.round(c * f.shade));
+    const col = `rgb(${r},${g},${b})`;
+    ctx.fillStyle = col; ctx.strokeStyle = col;
+    ctx.beginPath();
+    f.q.forEach((p, i) => (i === 0 ? ctx.moveTo(p.s.sx, p.s.sy) : ctx.lineTo(p.s.sx, p.s.sy)));
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  // ---- 2D 차트 단면 위치를 패턴 표면 위에 표시 ----
+  // 방향 벡터가 카메라 반대쪽(뒷면)이면 흐리게 그려 앞뒤를 구분 (볼록에 가까운 로브 기준 근사)
+  const surfPt = (psiDeg, phiDeg, p) => {
+    const dir = toView(...sph(psiDeg, phiDeg, 1));
+    return { s: proj(...sph(psiDeg, phiDeg, dbToRadius(p, rad.maxP, R, 30))), front: dir.vz > -0.08 };
+  };
+  const drawPath = (points, color) => {
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i];
+      const front = a.front && b.front;
+      ctx.lineWidth = front ? 2.4 : 1.2;
+      ctx.setLineDash(front ? [6, 4] : [2, 4]);
+      ctx.strokeStyle = front ? color : "rgba(255, 255, 255, 0.55)";
+      ctx.beginPath(); ctx.moveTo(a.s.sx, a.s.sy); ctx.lineTo(b.s.sx, b.s.sy); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  };
+  const elToSph = (deg) => [deg <= 90 ? deg : 180 - deg, deg <= 90 ? rad.bestAzDeg : rad.bestAzDeg + 180];
+  const azPts = rad.azCut.map(pt => surfPt(rad.azCutElDeg, pt.deg, pt.p));
+  const elPts = rad.elCut.filter(pt => pt.p > 0).map(pt => surfPt(...elToSph(pt.deg), pt.p));
+  drawPath(azPts, "rgba(21, 128, 61, 0.95)");
+  drawPath(elPts, "rgba(29, 78, 216, 0.95)");
+
+  // 2D 차트에서 고른 마커 (빨간 점, 뒷면이면 작고 흐리게)
+  const dot = (pt) => {
+    ctx.globalAlpha = pt.front ? 1 : 0.45;
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#dc2626"; ctx.lineWidth = pt.front ? 3 : 2;
+    ctx.beginPath(); ctx.arc(pt.s.sx, pt.s.sy, pt.front ? 5.5 : 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.globalAlpha = 1;
+  };
+  const elM = nearestCut(rad.elCut, state.markerToaDeg !== null ? state.markerToaDeg : rad.elCutPeakDeg);
+  if (elM.p > 0) dot(surfPt(...elToSph(elM.deg), elM.p));
+  const azM = nearestCut(rad.azCut, state.markerAzDeg !== null ? state.markerAzDeg : rad.bestAzDeg);
+  dot(surfPt(rad.azCutElDeg, azM.deg, azM.p));
+
+  // ---- 와이어 (형태 확인용, 축척 별도 · 투시 표시) ----
+  if (geo) {
+    const span = Math.max(geo.spanX, 4);
+    const k = (0.62 * R) / span;
+    const wx = (x) => (x - geo.spanX / 2) * k;
+    const line = (nodes, z0, style, width, dash) => {
+      ctx.strokeStyle = style; ctx.lineWidth = width; ctx.setLineDash(dash);
+      ctx.beginPath();
+      nodes.forEach((n, i) => {
+        const s = proj(wx(n[0]), 0, z0 === null ? n[1] * k : 0);
+        if (i === 0) ctx.moveTo(s.sx, s.sy); else ctx.lineTo(s.sx, s.sy);
+      });
+      ctx.stroke(); ctx.setLineDash([]);
+    };
+    line(geo.nodes, 0, "rgba(15, 23, 42, 0.28)", 2, []);              // 지면 그림자
+    line(geo.cpNodes, null, "rgba(255,255,255,0.9)", 4, []);
+    line(geo.cpNodes, null, "#64748b", 2, [4, 3]);
+    line(geo.nodes, null, "rgba(255,255,255,0.9)", 5.5, []);
+    line(geo.nodes, null, "#d97706", 3, []);
+    const fp = proj(wx(geo.nodes[0][0]), 0, geo.nodes[0][1] * k);
+    ctx.fillStyle = "#2563eb"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(fp.sx, fp.sy, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+
+  // ---- 방향 라벨 (2D 방위각 차트와 같은 기준: 0° = 끝단, 180° = 급전) ----
+  ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
+  [[0, "0° 끝단"], [90, "90°"], [180, "180° 급전"], [270, "270°"]].forEach(([d, t]) => {
+    const s = proj(1.12 * R * Math.cos(deg2rad(d)), 1.12 * R * Math.sin(deg2rad(d)), 0);
+    const tw = ctx.measureText(t).width + 10;
+    ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.fillRect(s.sx - tw / 2, s.sy - 9, tw, 17);
+    ctx.fillStyle = "#334155"; ctx.fillText(t, s.sx, s.sy + 4);
+  });
+  ctx.textAlign = "left";
+
+  // ---- 범례: 색상 막대 + 스케일 설명 ----
+  const bx = 12, by = h - 24, bw = Math.min(150, w * 0.35), bh = 9;
+  const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  DB_STOPS.forEach(([d, c]) => grad.addColorStop((d + 30) / 30, `rgb(${c.join(",")})`));
+  ctx.fillStyle = grad; ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
+  ctx.fillStyle = "#475569"; ctx.font = "11px sans-serif";
+  ctx.fillText("-30", bx, by - 4);
+  ctx.textAlign = "right"; ctx.fillText("0 dB", bx + bw, by - 4); ctx.textAlign = "left";
+  ctx.fillStyle = "#334155"; ctx.font = "bold 11.5px sans-serif";
+  ctx.fillText(`반지름·색 = 전체 최대(${rad.gainDbi.toFixed(1)} dBi) 대비 상대 이득`, 12, 18);
+  ctx.textAlign = "right"; ctx.fillStyle = "#64748b"; ctx.font = "11px sans-serif";
+  ctx.fillText(`시점: 방위 ${Math.round(((view3d.yaw % 360) + 360) % 360)}° · 고도 ${Math.round(view3d.pitch)}°`, w - 12, h - 12);
+  ctx.textAlign = "left";
+}
+
+let rafPending3D = false;
+function schedule3D() {
+  if (rafPending3D) return;
+  rafPending3D = true;
+  requestAnimationFrame(() => { rafPending3D = false; draw3D(currentRad, currentGeo); });
+}
+
 // SWR 차트 여백 (포인터 좌표 변환에도 같이 사용)
 const SWR_PAD = { l: 46, r: 24, t: 24, b: 36 };
 
@@ -944,6 +1194,7 @@ function redrawAll() {
   drawGeometry(geo);
   drawElevation(currentRad);
   drawAzimuth(currentRad);
+  draw3D(currentRad, geo);
 }
 
 // =====================================================================
@@ -1009,6 +1260,8 @@ function updateAll(changedKey) {
   drawGeometry(geo);
   drawElevation(currentRad);
   drawAzimuth(currentRad);
+  currentGeo = geo;
+  draw3D(currentRad, geo);
 }
 
 /** 입력이 연속으로 들어와도 프레임당 한 번만 전체 갱신 (3D 적분 부하 완화) */
@@ -1073,6 +1326,7 @@ bindCanvasPointer(elCanvasEl, (e) => {
     isManualToa = true;
     state.markerToaDeg = Math.round(angle);
     drawElevation(currentRad);
+    schedule3D();
   }
 });
 
@@ -1086,7 +1340,34 @@ bindCanvasPointer(azCanvasEl, (e) => {
   isManualAz = true;
   state.markerAzDeg = Math.round(angle);
   drawAzimuth(currentRad);
+  schedule3D();
 });
+
+// --- 3D 패턴 회전 ---
+// 마우스: 좌우 = 방위 회전, 상하 = 시점 고도. 터치: 좌우 드래그만 회전(세로는 페이지 스크롤).
+const patCanvasEl = document.getElementById("patCanvas");
+let drag3D = null;
+patCanvasEl.addEventListener("pointerdown", (e) => {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  drag3D = { x: e.clientX, y: e.clientY, yaw: view3d.yaw, pitch: view3d.pitch, mouse: e.pointerType === "mouse" };
+  try { patCanvasEl.setPointerCapture(e.pointerId); } catch (_) {}
+  patCanvasEl.classList.add("dragging");
+});
+patCanvasEl.addEventListener("pointermove", (e) => {
+  if (!drag3D) return;
+  view3d.yaw = drag3D.yaw - (e.clientX - drag3D.x) * 0.5;
+  if (drag3D.mouse) view3d.pitch = clamp(drag3D.pitch + (e.clientY - drag3D.y) * 0.4, 0, 89);
+  schedule3D();
+});
+["pointerup", "pointercancel"].forEach(t => patCanvasEl.addEventListener(t, () => {
+  drag3D = null;
+  patCanvasEl.classList.remove("dragging");
+}));
+document.querySelectorAll("#view3d-buttons button").forEach(btn => btn.addEventListener("click", () => {
+  if (btn.dataset.reset) Object.assign(view3d, VIEW3D_DEFAULT);
+  else view3d.pitch = parseFloat(btn.dataset.pitch);
+  schedule3D();
+}));
 
 // --- SWR 주파수 마커 ---
 const swrCanvasEl = document.getElementById("swrCanvas");

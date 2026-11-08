@@ -308,8 +308,10 @@
     <summary>계산 방법 및 모델 사양</summary>
     <ul class="spec-list">
       <li><strong>복사:</strong> 20.20m 와이어를 60세그먼트로 분할, 원거리장 벡터 합산. 대지는 복소 유전율 기반 프레넬 반사계수(영상법).</li>
-      <li><strong>전류:</strong> 이상적 정현파 분포 가정. 상호결합, 단부 효과, 굴곡부 결합 미반영.</li>
+      <li><strong>전류:</strong> 와이어 끝단 기준 정현파 분포(운용 주파수의 파수 k 적용)에 소량의 고정 위상 성분(경험값)을 더해 가정. 모멘트법(MoM) 해석이 아니므로 상호결합·굴곡부 결합은 미반영.</li>
+      <li><strong>단부 효과:</strong> 방사 패턴 계산에는 미반영. SWR 곡선에는 고조파 공진점이 기본파의 정수배보다 높아지는 경향을 경험적으로 반영.</li>
       <li><strong>미반영:</strong> 49:1 Unun 손실, 급전선·카운터포이즈 공통모드 전류, 주변 물체.</li>
+      <li><strong>차트:</strong> 수직 단면은 수평 단면의 최대 방위각을 지나는 평면입니다. 주 발사각이 60°를 넘으면 이 평면이 3D 최대점을 지나지 않을 수 있어, 단면의 Peak 각도·이득은 KPI 값과 약간 다를 수 있습니다.</li>
       <li><strong>수치:</strong> 이득은 지상고·대지별 경험 보정 포함. VSWR은 경험적 곡선 기반 추정(기준 2450Ω). 모두 설치 조건 간 비교용.</li>
     </ul>
   </details>
@@ -520,21 +522,21 @@ function compute3DRadiation(geo, freqMHz) {
 
   // --- 수직 단면 (수평 단면 최대 방위각을 지나는 평면) ---
   const elCut = [];
-  let maxElCutP = 1e-9;
+  let maxElCutP = 1e-9, elCutPeakDeg = 90;   // elCutPeakDeg: 단면(0°~180°) 안의 최대 샘플 각도
   for (let deg = 0; deg <= 180; deg += 2) {
     const psiDeg = Math.max(0.5, deg <= 90 ? deg : 180 - deg);
     const azDeg = deg <= 90 ? cutPeakAzDeg : cutPeakAzDeg + 180;
     const isEdge = (deg === 0 || deg === 180);
     const p = isEdge ? 0 : evalFieldPower(segData, deg2rad(psiDeg), deg2rad(azDeg), calcFresnel(deg2rad(psiDeg), freqMHz));
     elCut.push({ deg, p });
-    if (p > maxElCutP) maxElCutP = p;
+    if (p > maxElCutP) { maxElCutP = p; elCutPeakDeg = deg; }
   }
 
   return {
     gainDbi, maxP,                                   // maxP: 마커 dBi 계산용 전체 최대값
     toaDeg: bestElDeg, bestAzDeg: cutPeakAzDeg, azCutElDeg,   // bestAzDeg: 수평 단면의 최대 방위각
     azMaxToMinDb: 10 * Math.log10(maxAzCutP / Math.max(1e-9, minAzCutP)),
-    elCut, maxElCutP, azCut, maxAzCutP,
+    elCut, maxElCutP, elCutPeakDeg, azCut, maxAzCutP,
     wl: segData.wl, freqMHz
   };
 }
@@ -770,14 +772,14 @@ function drawElevation(rad) {
   });
   ctx.closePath(); ctx.fill(); ctx.stroke();
 
-  // Peak 지시선
-  const peakRad = deg2rad(rad.toaDeg);
+  // Peak 지시선: 이 단면에서 실제로 최대인 각도 (90°~180° 쪽일 수도 있음)
+  const peakRad = deg2rad(rad.elCutPeakDeg);
   ctx.strokeStyle = "rgba(37, 99, 235, 0.35)"; ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
   ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + maxR * Math.cos(peakRad), cy - maxR * Math.sin(peakRad)); ctx.stroke();
   ctx.setLineDash([]);
 
   // 사용자 마커
-  const markerDeg = state.markerToaDeg !== null ? state.markerToaDeg : rad.toaDeg;
+  const markerDeg = state.markerToaDeg !== null ? state.markerToaDeg : rad.elCutPeakDeg;
   const pt = nearestCut(rad.elCut, markerDeg);
   const a = deg2rad(pt.deg);
   const r = dbToRadius(pt.p, rad.maxElCutP, maxR, 30);
@@ -974,7 +976,7 @@ function updateAll(changedKey) {
   document.getElementById("badge-ground").textContent = `대지: ${g.name} (εr=${g.er}, σ=${g.sig})`;
 
   currentRad = compute3DRadiation(geo, b.defaultFreq);   // 패턴은 밴드 기준 주파수로 계산 (SWR 마커와 독립)
-  if (!isManualToa) state.markerToaDeg = currentRad.toaDeg;
+  if (!isManualToa) state.markerToaDeg = currentRad.elCutPeakDeg;
   if (!isManualAz)  state.markerAzDeg  = currentRad.bestAzDeg;
 
   const swrRes = drawSWR(geo);

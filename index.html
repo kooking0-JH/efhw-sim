@@ -50,18 +50,19 @@
   .slider-box { display: flex; flex-direction: column; gap: 14px; }
   .slider-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.95rem; font-weight: 600; }
   .slider-label { min-width: 125px; }
-  .slider-item input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 8px; }
+  .slider-item input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); cursor: pointer; height: 8px; }
   .slider-val { width: 55px; text-align: right; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; font-size: 1.05rem; }
   .geo-summary { font-size: 0.9rem; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--border); display: flex; justify-content: space-between; font-weight: 600; }
 
   /* ---------- 설정 + 측면도 (좌우 배치) ---------- */
   .setup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
-  @media (max-width: 920px) { .setup-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 920px) { .setup-grid { grid-template-columns: minmax(0, 1fr); } }
   .slider-card { display: flex; flex-direction: column; }
   .slider-card .slider-box { flex: 1; justify-content: center; gap: 26px; }
   .setup-grid .canvas-wrap { height: 260px; }
   .slider-card .geo-summary { flex-wrap: wrap; gap: 4px 12px; }
   @media (max-width: 600px) { .slider-label { min-width: 100px; } }
+  @media (max-width: 380px) { .slider-label { min-width: 84px; } .slider-item { gap: 8px; } }
 
   /* ---------- KPI ---------- */
   .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }

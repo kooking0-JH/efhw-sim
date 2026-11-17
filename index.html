@@ -123,7 +123,7 @@
     <div class="badge-group">
       <div class="badge">와이어: 20.20m (#20 AWG)</div>
       <div class="badge">변압기: 49:1 Unun (100pF 보상캡)</div>
-      <div class="badge">카운터포이즈: 2.0m</div>
+      <div class="badge">카운터포이즈: 2.0m (표시용 · 미계산)</div>
       <div class="badge" id="badge-ground">대지: Average (εr=13, σ=0.005 S/m)</div>
     </div>
   </header>
@@ -305,19 +305,19 @@
       <div class="unun-grid">
         <div class="unun-item">
           <h4>1. 50Ω ↔ 2450Ω 매칭</h4>
-          <p>반파장 와이어 끝은 전압이 최대인 고임피던스(수천 Ω) 지점입니다. 1차 2턴·2차 14턴(1:7) 변압기로 50Ω을 약 2450Ω으로 정합합니다.</p>
+          <p>반파장 와이어 끝은 전압이 최대인 고임피던스(수천 Ω) 지점입니다. 1차 2턴·2차 14턴(1:7) 변압기로 50Ω을 약 2450Ω으로 정합합니다. 제품에 따라 64:1(1:8, 약 3200Ω)을 쓰기도 하며, 이 시뮬레이터의 SWR은 49:1 기준입니다.</p>
         </div>
         <div class="unun-item">
           <h4>2. 100~150pF 보상 캡(커패시터)</h4>
-          <p>1차측에 병렬로 다는 고압 커패시터(2~3kV)가 코어의 <strong>누설 인덕턴스를 상쇄</strong>합니다. 높은 밴드(15m/10m)에서 SWR이 올라가는 현상을 줄입니다.</p>
+          <p>1차측(50Ω 쪽)에 병렬로 다는 커패시터가 코어의 <strong>누설 인덕턴스를 상쇄</strong>해, 높은 밴드(15m/10m)에서 SWR이 올라가는 현상을 줄입니다. 1차측 전압은 100W에서 약 70V RMS로 낮지만, 전압 여유와 저손실 유전체를 위해 1~3kV급 마이카·고압 세라믹을 씁니다. 고전압은 2차측(안테나 쪽)에 걸립니다. 100W·2450Ω 정합 상태에서 약 495V RMS(피크 약 700V)이고, SWR이 높거나 출력이 크면 1kV를 넘을 수 있으므로 송신 중에는 급전점과 와이어 끝단을 만지지 마십시오.</p>
         </div>
         <div class="unun-item">
           <h4>3. 카운터포이즈 &amp; 초크 발룬</h4>
-          <p>전류가 돌아갈 경로(리턴 패스)가 필요합니다. 2m 와이어를 지면에 늘어뜨리거나, 급전선 2~4m 아래에 1:1 초크 발룬을 설치해 급전선으로 흐르는 공통모드 전류(CMC)를 차단합니다.</p>
+          <p>전류가 돌아갈 경로(리턴 패스)가 필요합니다. 짧은 카운터포이즈를 쓰거나 급전선 외피 일부를 리턴 경로로 쓰고, 그 아래에 1:1 초크를 달아 공통모드 전류(CMC)가 무전기 쪽으로 가는 것을 막습니다. 초크 위치는 제조사마다 다릅니다(예: Palomar는 정합기 아래 약 0.5m). 급전선 외피와 카운터포이즈도 실제로는 안테나의 일부로 복사하지만, 이 시뮬레이터는 이 전류를 계산하지 않습니다.</p>
         </div>
         <div class="unun-item">
           <h4>4. 단부 효과와 고조파 이동</h4>
-          <p>단부 효과(End effect)로 20/15/10m 공진점은 기본파의 정수배에서 벗어납니다. 와이어 길이는 전 대역 SWR을 절충한 값입니다.</p>
+          <p>단부 효과(End effect)로 20/15/10m 공진점은 기본파의 정수배에서 벗어납니다. 와이어 길이는 전 대역 SWR을 절충한 값입니다. 고조파가 아닌 대역(WARC 등)에서 튜너로 억지로 맞추거나 출력을 높이면 Unun 코어 손실이 커져 정합기가 뜨거워질 수 있습니다.</p>
         </div>
       </div>
     </div>
@@ -326,7 +326,7 @@
       <div class="card-title">시뮬레이션 해석 및 현장 지침</div>
       <ul class="guide-list">
         <li><strong>높이:</strong> 높이를 올리면 고각 복사는 상대적으로 줄고 저각 복사가 늘어납니다. 40m 수평 설치에서 3m → 14m로 올리면 천정(88°) 방향과 20° 방향의 이득 차이가 약 7dB 줄어듭니다. 다만 H가 10m 이하이면 주 발사각은 60° 이상(NVIS 영역)입니다.</li>
-        <li><strong>밴드:</strong> 밴드별 발사각이 다릅니다. 기본 설치(역V, Average) 기준 40m 88°, 20m 40°, 15m 90°, 10m 20°입니다. 15m처럼 고조파 밴드는 KPI의 방위각 편차를 함께 확인하시기 바랍니다.</li>
+        <li><strong>밴드:</strong> 밴드별 발사각이 다릅니다. 기본 설치(역V, Average) 기준 40m는 90°(NVIS), 20m는 42°이지만 20~66°가 1dB 안쪽인 넓은 로브, 15m는 90°, 10m는 72°와 18°의 두 로브가 0.8dB 차이로 비슷합니다. 15m·10m의 고각 복사는 대부분 전리층을 통과하므로 원거리 교신에는 저각 로브가 유효합니다. 고조파 밴드는 KPI의 방위각 편차도 함께 확인하시기 바랍니다.</li>
         <li><strong>대지·방위각:</strong> 대지는 반사 조건과 손실 보정에 반영됩니다. 대지 간 이득 차이는 상대 비교용으로 보시기 바랍니다. 방위각 차트는 60° 앙각 단면이며, 최대-최소 편차는 40m 수평에서 2dB 안팎, 역V에서 약 1dB로 전방향성입니다.</li>
       </ul>
     </div>
@@ -336,12 +336,15 @@
     <summary>계산 방법 및 모델 사양</summary>
     <ul class="spec-list">
       <li><strong>복사:</strong> 20.20m 와이어를 60세그먼트로 분할, 원거리장 벡터 합산. 대지는 복소 유전율 기반 프레넬 반사계수(영상법).</li>
-      <li><strong>전류:</strong> 와이어 끝단 기준 정현파 분포(운용 주파수의 파수 k 적용)에 소량의 고정 위상 성분(경험값)을 더해 가정. 모멘트법(MoM) 해석이 아니므로 상호결합·굴곡부 결합은 미반영.</li>
-      <li><strong>단부 효과:</strong> 방사 패턴 계산에는 미반영. SWR 곡선에는 고조파 공진점이 기본파의 정수배보다 높아지는 경향을 경험적으로 반영.</li>
-      <li><strong>미반영:</strong> 49:1 Unun 손실, 급전선·카운터포이즈 공통모드 전류, 주변 물체.</li>
+      <li><strong>전류:</strong> 감쇠가 있는 개방 선로의 해 I(d) ∝ sinh((α + jk′)d)를 가정(d: 개방단으로부터 거리). 개방단에서 전류 0(경계 조건 만족). k′는 각 대역 공진점에서 와이어가 정확히 n × λ/2가 되도록 맞추고, α는 공진 시 급전점 전류비가 √(100Ω/2450Ω) ≈ 0.2가 되도록 정함(복사로 인한 진행파 성분). 모멘트법(MoM) 해석이 아니므로 상호결합·굴곡부 결합은 미반영.</li>
+      <li><strong>단부 효과:</strong> 고조파 공진점이 기본파의 정수배보다 높아지는 경향을 경험값으로 반영하며, SWR 곡선과 전류 분포가 같은 공진점을 사용.</li>
+      <li><strong>대지:</strong> 반사계수(영상법) 방식은 EZNEC의 MININEC형 대지와 같은 계열로, EZNEC 매뉴얼은 0.2λ보다 낮은 수평 와이어(40m 기준 약 8.5m 미만)에는 부정확하다고 명시. 이 높이에서 생기는 대지 근거리 손실은 계산하지 않고 지상고·대지별 경험 보정값으로 대신함.</li>
+      <li><strong>이득:</strong> 평균 지상고 0.3λ 이상은 MININEC형 이득(완전도체 대지 기준 입력 전력으로 정규화해 반사 손실을 반영), 0.2λ 미만은 경험식, 그 사이는 두 값을 부드럽게 연결. 대지별 경험 상수는 0.25~0.6λ 구간에서 MININEC형과 평균이 같아지도록 맞춤. 0.1λ 미만의 매우 낮은 설치는 NEC 비교 자료가 없어 검증되지 않았으며, 실제 이득은 이보다 낮을 수 있음.</li>
+      <li><strong>미반영:</strong> 49:1 Unun 손실, 급전선 외피·카운터포이즈 전류(실제로는 안테나의 일부로 복사하며 패턴과 임피던스를 바꿈), 주변 물체.</li>
       <li><strong>차트:</strong> 수직 단면은 수평 단면의 최대 방위각을 지나는 평면입니다. 주 발사각이 60°를 넘으면 이 평면이 3D 최대점을 지나지 않을 수 있어, 단면의 Peak 각도·이득은 KPI 값과 약간 다를 수 있습니다.</li>
       <li><strong>3D 패턴:</strong> 2D 차트와 같은 계산값(앙각 2° × 방위 5° 격자)을 전체 최대 대비 상대 dB로 표시(-30 dB 하한). 와이어는 형태 확인용으로 축척을 따로 맞춰 겹쳐 그린 것입니다.</li>
-      <li><strong>수치:</strong> 이득은 지상고·대지별 경험 보정 포함. VSWR은 경험적 곡선 기반 추정(기준 2450Ω). 모두 설치 조건 간 비교용.</li>
+      <li><strong>KPI:</strong> 주 발사각이 1dB 이내로 비슷한 로브가 둘이면 함께 표시. 방위각 편차는 이상적 전류 분포가 널을 실제보다 깊게 만들므로 20dB 이상은 수치 없이 표시.</li>
+      <li><strong>수치:</strong> VSWR은 경험적 곡선 기반 추정(기준 2450Ω). 모두 설치 조건 간 비교용.</li>
     </ul>
   </details>
 </div>
@@ -368,15 +371,22 @@ const GROUND_INFO = {
   poor_rocky: { er: 3.0,  sig: 0.001, name: "Poor/Rocky", desc: "암석/얼어붙은 땅. 손실 증가 (εr=3, σ=0.001)" }
 };
 
-// 이득(dBi) 경험적 보정값 (참고용 모델이므로 상대 비교용)
+// 이득(dBi) 계산 방식
+//  - 평균 지상고 0.3λ 이상: MININEC형 이득 (완전도체 대지 기준 입력 전력으로 정규화 → 반사 손실 반영)
+//  - 0.2λ 미만: 경험식 (MININEC형은 낮은 수평 와이어의 대지 근거리 손실을 계산하지 못함, EZNEC 매뉴얼)
+//  - 0.2~0.3λ: 두 값을 부드럽게 연결
+// 대지별 상수는 0.25~0.6λ 구간에서 경험식 평균이 MININEC형과 같아지도록 맞춤
 const GAIN_CAL = {
-  baseOffsetDb: 1.85,        // 기본 보정
+  baseOffsetDb: 1.85,        // 기본 보정 (지향성 → 이득, 일반 대지 기준)
   lowHeightSlopeDb: 5.5,     // 낮은 지상고 패널티 기울기 (dB / λ)
   lowHeightLimit: 0.22,      // 이 높이(λ) 미만이면 패널티 적용
-  highHeightLossDb: 0.15,    // 충분히 높을 때 고정 손실
-  poorGroundExtraDb: 1.5,
-  saltWaterBonusDb: -1.0
+  highHeightLossDb: 0.15,    // 충분히 높을 때 고정 손실 (도선 손실 등, MININEC형 이득에도 적용)
+  poorGroundExtraDb: 0.8,
+  saltWaterBonusDb: -1.7,
+  blendFromLambda: 0.2,      // 이 높이부터 MININEC형으로 전환 시작
+  blendToLambda: 0.3         // 이 높이 이상은 MININEC형만 사용
 };
+const PERFECT_GROUND = { RH: { re: -1, im: 0 }, RV: { re: 1, im: 0 } };
 
 const state = {
   band: "40m",
@@ -471,7 +481,28 @@ function evalFieldPower(segData, psiRad, phiRad, fresnel) {
   return C.abs2(Epsi) + C.abs2(Ephi);
 }
 
-/** 와이어를 N개 세그먼트로 나누고 각 세그먼트에 정현파 전류 할당 */
+/** 공진 시 급전점 전류 / 최대 전류 ≈ √(R_loop / R_feed) ≈ √(100Ω / 2450Ω) ≈ 0.2 */
+const FEED_CURRENT_RATIO = 0.2;
+
+/**
+ * 와이어 전류 분포 (개방단으로부터 거리 d [m]) — 감쇠가 있는 개방 선로의 해 I(d) ∝ sinh((α + jk')d)
+ * - k': 공진점(baseResFreq)에서 와이어가 정확히 n × λ/2가 되도록 맞춘 파수
+ *       (단부 효과로 고조파 공진점이 정수배보다 높아지는 것을 SWR 곡선과 같은 기준으로 반영)
+ * - α : 공진 시 급전점 전류비가 FEED_CURRENT_RATIO가 되도록 정한 감쇠(복사에 의한 진행파 성분)
+ * - 개방단(d = 0)에서 실수부·허수부 모두 0 → 경계 조건 I(0) = 0 만족
+ * 전역 위상(-j)을 곱해 정재파 성분을 실수부로 둠: cosh(αd)·sin(k'd) − j·sinh(αd)·cos(k'd)
+ */
+function wireCurrent(d, freqMHz) {
+  const band = BAND_INFO[state.band];
+  const kp = (band.harm * Math.PI / WIRE_LENGTH_M) * (freqMHz / band.baseResFreq);
+  const alpha = Math.asinh(FEED_CURRENT_RATIO) / WIRE_LENGTH_M;
+  return {
+    re: Math.cosh(alpha * d) * Math.sin(kp * d),
+    im: -Math.sinh(alpha * d) * Math.cos(kp * d)
+  };
+}
+
+/** 와이어를 N개 세그먼트로 나누고 각 세그먼트에 전류 할당 (원거리장 위상은 자유공간 파수 k) */
 function buildSegments(geo, freqMHz) {
   const N = 60;
   const ds = geo.totalLen / N;
@@ -500,7 +531,7 @@ function buildSegments(geo, freqMHz) {
     const distFromEnd = geo.totalLen - s;
     segments.push({
       x, z, dx: ux * ds, dz: uz * ds,
-      cur: { re: Math.sin(k * distFromEnd), im: 0.08 * Math.cos(k * distFromEnd) }
+      cur: wireCurrent(distFromEnd, freqMHz)
     });
   }
   return { segments, k, wl };
@@ -521,17 +552,50 @@ function compute3DRadiation(geo, freqMHz) {
     grid3D[a] = evalFieldPower(segData, deg2rad(0.5), deg2rad(a * 5), horizonFresnel);
   }
 
-  let maxP = 0, bestElDeg = 45, bestAzDeg = 90, sumP = 0;
+  let maxP = 0, bestElDeg = 45, bestAzDeg = 90, sumP = 0, sumPerfect = 0;
   for (let e = 1; e <= 45; e++) {
     const psiRad = deg2rad(e * 2);
     const cosPsi = Math.cos(psiRad);
+    const dOmega = cosPsi * (Math.PI / 90) * (Math.PI / 36);       // 고체각 가중
     for (let a = 0; a < 72; a++) {
       const p = evalFieldPower(segData, psiRad, deg2rad(a * 5), fresnelTable[e]);
       grid3D[e * 72 + a] = p;
-      sumP += p * cosPsi * (Math.PI / 90) * (Math.PI / 36);       // 고체각 가중
+      sumP += p * dOmega;
+      // 완전도체 대지 기준 복사 전력 (MININEC형 입력 전력, 10° 간격으로 충분)
+      if (a % 2 === 0) sumPerfect += evalFieldPower(segData, psiRad, deg2rad(a * 5), PERFECT_GROUND) * dOmega * 2;
       if (p > maxP) { maxP = p; bestElDeg = e * 2; bestAzDeg = a * 5; }
     }
   }
+
+  // --- 앙각 프로파일(각 앙각에서 방위 전체 최대값, dB) ---
+  const elProfile = [];
+  for (let e = 1; e <= 45; e++) {
+    let m = 0;
+    for (let a = 0; a < 72; a++) m = Math.max(m, grid3D[e * 72 + a]);
+    elProfile.push({ deg: e * 2, db: 10 * Math.log10(Math.max(1e-12, m) / maxP) });
+  }
+  const peakIdx = bestElDeg / 2 - 1;
+
+  // 보조 주 로브: 최대점과 1 dB 이내인 다른 국소 최대이면서, 둘 사이에 그 로브보다 1 dB 이상
+  // 깊은 골이 있을 때만 "주 로브 2개"로 판단 (넓은 로브 하나의 작은 굴곡은 제외)
+  let toaAlt = null;
+  elProfile.forEach((pt, i) => {
+    if (i === peakIdx || pt.db < -1) return;
+    const prev = i > 0 ? elProfile[i - 1].db : -99;
+    const next = i < elProfile.length - 1 ? elProfile[i + 1].db : -99;
+    if (pt.db < prev || pt.db < next) return;                      // 국소 최대만
+    const lo = Math.min(i, peakIdx), hi = Math.max(i, peakIdx);
+    let dip = 0;
+    for (let j = lo; j <= hi; j++) dip = Math.min(dip, elProfile[j].db);
+    if (dip > pt.db - 1) return;                                   // 골이 얕으면 같은 로브
+    if (!toaAlt || pt.db > toaAlt.db) toaAlt = { deg: pt.deg, db: pt.db };
+  });
+
+  // 주 로브의 -1 dB 앙각 범위 (로브가 넓을 때 Peak 각도 하나만으로는 오해 소지)
+  let lobeLo = peakIdx, lobeHi = peakIdx;
+  while (lobeLo > 0 && elProfile[lobeLo - 1].db >= -1) lobeLo--;
+  while (lobeHi < elProfile.length - 1 && elProfile[lobeHi + 1].db >= -1) lobeHi++;
+  const toaRange = [elProfile[lobeLo].deg, elProfile[lobeHi].deg];
 
   // --- 이득 (dBi): 방향성 - 경험적 보정 ---
   const hLambda = geo.avgH / segData.wl;
@@ -542,7 +606,11 @@ function compute3DRadiation(geo, freqMHz) {
   if (state.ground === "salt_water") lossDb += GAIN_CAL.saltWaterBonusDb;
 
   const directivityDb = 10 * Math.log10(maxP / Math.max(1e-9, sumP / (4 * Math.PI)));
-  const gainDbi = +(directivityDb - GAIN_CAL.baseOffsetDb - lossDb).toFixed(1);
+  const empiricalDb = directivityDb - GAIN_CAL.baseOffsetDb - lossDb;
+  const mininecDb = 10 * Math.log10(maxP / Math.max(1e-12, sumPerfect / (4 * Math.PI))) - GAIN_CAL.highHeightLossDb;
+  const tBlend = clamp((hLambda - GAIN_CAL.blendFromLambda) / (GAIN_CAL.blendToLambda - GAIN_CAL.blendFromLambda), 0, 1);
+  const w = tBlend * tBlend * (3 - 2 * tBlend);                    // smoothstep
+  const gainDbi = +(w * mininecDb + (1 - w) * empiricalDb).toFixed(1);
 
   // --- 수평 단면 (주 발사각이 60°를 넘으면 60° 단면) ---
   const azCutElDeg = Math.min(bestElDeg, 60);
@@ -571,7 +639,7 @@ function compute3DRadiation(geo, freqMHz) {
 
   return {
     gainDbi, maxP,                                   // maxP: 마커 dBi 계산용 전체 최대값
-    toaDeg: bestElDeg, bestAzDeg: cutPeakAzDeg, azCutElDeg,   // bestAzDeg: 수평 단면의 최대 방위각
+    toaDeg: bestElDeg, toaAlt, toaRange, bestAzDeg: cutPeakAzDeg, azCutElDeg,   // bestAzDeg: 수평 단면의 최대 방위각
     azMaxToMinDb: 10 * Math.log10(maxAzCutP / Math.max(1e-9, minAzCutP)),
     elCut, maxElCutP, elCutPeakDeg, azCut, maxAzCutP, grid3D,
     wl: segData.wl, freqMHz
@@ -756,7 +824,8 @@ function drawGeometry(geo) {
   ctx.stroke();
 
   // 전류 분포 (와이어 위쪽으로 |I| 크기만큼 부풀림)
-  const harm = BAND_INFO[state.band].harm;
+  const fDraw = BAND_INFO[state.band].defaultFreq;
+  const ampMax = Math.cosh(Math.asinh(FEED_CURRENT_RATIO));      // |I| 최대값 근사 (정규화용)
   ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2; ctx.fillStyle = "rgba(220, 38, 38, 0.15)";
   let accumLen = 0;
   for (let i = 0; i < geo.nodes.length - 1; i++) {
@@ -770,7 +839,8 @@ function drawGeometry(geo) {
     ctx.beginPath(); ctx.moveTo(x1, y1);
     for (let s = 0; s <= 60; s++) {
       const t = s / 60;
-      const amp = Math.abs(Math.sin((harm * Math.PI * (accumLen + t * segLen)) / WIRE_LENGTH_M)) * 26;
+      const I = wireCurrent(WIRE_LENGTH_M - (accumLen + t * segLen), fDraw);
+      const amp = Math.min(1, Math.hypot(I.re, I.im) / ampMax) * 26;
       ctx.lineTo(x1 + dx * t + nx * amp, y1 + dy * t + ny * amp);
     }
     ctx.lineTo(x2, y2); ctx.fill(); ctx.stroke();
@@ -1241,22 +1311,33 @@ function updateAll(changedKey) {
 
   // KPI
   const toa = currentRad.toaDeg;
-  document.getElementById("kpi-gain").textContent = currentRad.gainDbi.toFixed(1);
-  document.getElementById("kpi-toa").textContent = toa;
-  document.getElementById("kpi-toa-desc").textContent =
-    toa >= 60 ? "고각 복사 (NVIS · 근거리용)"
-    : toa >= 30 ? "중각 복사 (중거리용)"
+  const alt = currentRad.toaAlt;
+  // NVIS는 임계주파수 아래(이 시뮬레이터에서는 40m)에서만 성립. 15m·10m 고각 복사는 대부분 전리층을 통과.
+  const isNvisBand = state.band === "40m";
+  const angleClass = (deg) =>
+    deg >= 60 ? (isNvisBand ? "고각 복사 (NVIS · 근거리용)" : "고각 복사 (이 대역은 대부분 전리층 통과)")
+    : deg >= 30 ? "중각 복사 (중거리용)"
     : "저각 복사 (원거리 DX용)";
+  const angleShort = (deg) => (deg >= 60 ? "고각" : deg >= 30 ? "중각" : "저각");
+  document.getElementById("kpi-gain").textContent = currentRad.gainDbi.toFixed(1);
+  document.getElementById("kpi-toa").textContent = alt ? `${toa} / ${alt.deg}` : toa;
+  const [rLo, rHi] = currentRad.toaRange;
+  document.getElementById("kpi-toa-desc").textContent = alt
+    ? `주 로브 2개 (${angleShort(toa)}·${angleShort(alt.deg)}, 차이 ${Math.abs(alt.db).toFixed(1)}dB)`
+    : angleClass(toa) + (rHi - rLo >= 16 ? ` · 1dB 폭 ${rLo}~${rHi}°` : "");
   renderSwrKpi(swrRes);
   document.getElementById("kpi-harm").textContent = b.harm;
   const dev = currentRad.azMaxToMinDb;
   const dirClass = dev < 3 ? "전방향성" : (dev < 10 ? "약한 지향성" : "지향성");
+  // 이상적 전류 분포는 널을 실제보다 깊게 만들므로 20 dB 이상은 수치를 표시하지 않음
+  const devText = dev > 20 ? "20dB 이상" : `${dev.toFixed(1)}dB`;
   document.getElementById("kpi-lobe-desc").textContent =
-    `전류 반파장 ${b.harm}개 · 방위각 편차 ${dev.toFixed(1)}dB (${dirClass})`;
+    `전류 반파장 ${b.harm}개 · 방위각 편차 ${devText} (${dirClass})`;
 
-  document.getElementById("el-ref-label").textContent = `Peak: ${currentRad.gainDbi.toFixed(1)} dBi`;
+  document.getElementById("el-ref-label").textContent = `전체 Peak: ${currentRad.gainDbi.toFixed(1)} dBi`;
   document.getElementById("az-ref-label").textContent =
-    toa > 60 ? "60° 앙각 단면 (NVIS 영역)" : `주 발사각 ${currentRad.azCutElDeg}° 단면`;
+    toa > 60 ? (isNvisBand ? "60° 앙각 단면 (NVIS 영역)" : "60° 앙각 단면")
+    : `주 발사각 ${currentRad.azCutElDeg}° 단면`;
 
   drawGeometry(geo);
   drawElevation(currentRad);

@@ -155,7 +155,7 @@
         <select id="ground-select">
           <option value="average" selected>일반 토양/평야 (Average)</option>
           <option value="salt_water">바닷물/해안가 (Salt Water)</option>
-          <option value="poor_rocky">바위/산 정상/얼어붙은 땅 (Poor)</option>
+          <option value="poor_rocky">바위/산악 지형 (Poor)</option>
         </select>
         <span class="ground-desc" id="ground-desc">표준 대지. (εr=13, σ=0.005)</span>
       </div>
@@ -216,7 +216,7 @@
     <div class="kpi">
       <div class="label">최대 모델링 이득 (Peak Gain)</div>
       <div class="val"><span id="kpi-gain">4.2</span> <span class="unit">dBi</span></div>
-      <div class="desc">상대 비교용 · 경험적 보정 포함</div>
+      <div class="desc">상대 비교용 · ARRL 자료 기준 보정</div>
     </div>
     <div class="kpi">
       <div class="label">최대 주 발사각 (Peak TOA)</div>
@@ -337,9 +337,10 @@
     <ul class="spec-list">
       <li><strong>복사:</strong> 20.20m 와이어를 60세그먼트로 분할, 원거리장 벡터 합산. 대지는 복소 유전율 기반 프레넬 반사계수(영상법).</li>
       <li><strong>전류:</strong> 감쇠가 있는 개방 선로의 해 I(d) ∝ sinh((α + jk′)d)를 가정(d: 개방단으로부터 거리). 개방단에서 전류 0(경계 조건 만족). k′는 각 대역 공진점에서 와이어가 정확히 n × λ/2가 되도록 맞추고, α는 공진 시 급전점 전류비가 √(100Ω/2450Ω) ≈ 0.2가 되도록 정함(복사로 인한 진행파 성분). 모멘트법(MoM) 해석이 아니므로 상호결합·굴곡부 결합은 미반영.</li>
-      <li><strong>단부 효과:</strong> 고조파 공진점이 기본파의 정수배보다 높아지는 경향을 경험값으로 반영하며, SWR 곡선과 전류 분포가 같은 공진점을 사용.</li>
-      <li><strong>대지:</strong> 반사계수(영상법) 방식은 EZNEC의 MININEC형 대지와 같은 계열로, EZNEC 매뉴얼은 0.2λ보다 낮은 수평 와이어(40m 기준 약 8.5m 미만)에는 부정확하다고 명시. 이 높이에서 생기는 대지 근거리 손실은 계산하지 않고 지상고·대지별 경험 보정값으로 대신함.</li>
-      <li><strong>이득:</strong> 평균 지상고 0.3λ 이상은 MININEC형 이득(완전도체 대지 기준 입력 전력으로 정규화해 반사 손실을 반영), 0.2λ 미만은 경험식, 그 사이는 두 값을 부드럽게 연결. 대지별 경험 상수는 0.25~0.6λ 구간에서 MININEC형과 평균이 같아지도록 맞춤. 0.1λ 미만의 매우 낮은 설치는 NEC 비교 자료가 없어 검증되지 않았으며, 실제 이득은 이보다 낮을 수 있음.</li>
+      <li><strong>단부 효과:</strong> 고조파 공진점이 기본파의 정수배보다 높아지는 방향만 반영한 추정값(실측·NEC 검증 없음). SWR 곡선과 전류 분포가 같은 공진점을 사용. 양끝 개방 롱와이어 식(ARRL Antenna Book 21판 13-5쪽 Eq 1, 길이 = 984(N − 0.025)/f)을 그대로 적용하면 20/15/10m 공진점은 14.48/21.91/29.33 MHz로 더 높아지나, EFHW는 급전 끝에 변압기 2차 권선·카운터포이즈·급전선 외피가 붙어 이 식의 전제와 다름. 실제 공진점은 카운터포이즈·급전선 길이에 따라 달라지므로 NanoVNA 실측값을 기준으로 할 것.</li>
+      <li><strong>대지:</strong> 반사계수(영상법) 방식은 EZNEC의 MININEC형 대지와 같은 계열로, 0.2λ보다 낮은 수평 와이어(40m 기준 약 8.5m 미만)에는 부정확함(ARRL Antenna Book 21판 4-10쪽). 이 높이에서 생기는 대지 근거리 손실은 계산하지 않고 아래 보정값으로 대신함. 대지 상수는 ARRL 3-13쪽 Table 2 기준.</li>
+      <li><strong>이득:</strong> ARRL Antenna Book 21판 6-8쪽 Fig 14(80m 수평 반파장 다이폴, Average 대지, NEC 계산)의 높이별 이득 −7 / −0.4 / 6.7 / 6.6 dBi(0.0075 / 0.037 / 0.25 / 0.37λ)에 40m 수평 설치 결과가 맞도록 보정. 평균 지상고 0.2λ 미만은 원거리장 방향성에서 대지 근거리 손실(위 기준점에서 산출)을 빼고, 0.3λ 이상은 MININEC형 이득(완전도체 대지 기준 입력 전력으로 정규화)에 NEC 대비 차이 0.78 dB를 더하며, 그 사이는 두 값을 부드럽게 연결. 손실은 평균 지상고(λ) 기준으로 모든 대역·가설 형태에 같게 적용하므로 대역에 따른 대지 손실 차이는 반영되지 않음. Poor·Salt Water 대지의 손실 배율(1.15·0.15)은 ARRL 기준점이 없는 추정값.</li>
+      <li><strong>발사각:</strong> 반사계수 방식은 0.25λ 부근에서 NEC(Sommerfeld-Norton 대지)보다 주 발사각이 일찍 천정을 벗어남. ARRL Fig 14의 0.25λ 다이폴은 90°에서 최대이나, 이 모델은 같은 높이에서 60° 안팎을 표시함. 이 높이의 로브는 1dB 폭이 40~90°로 넓어 실제 차이는 작음.</li>
       <li><strong>미반영:</strong> 49:1 Unun 손실, 급전선 외피·카운터포이즈 전류(실제로는 안테나의 일부로 복사하며 패턴과 임피던스를 바꿈), 주변 물체.</li>
       <li><strong>차트:</strong> 수직 단면은 수평 단면의 최대 방위각을 지나는 평면입니다. 주 발사각이 60°를 넘으면 이 평면이 3D 최대점을 지나지 않을 수 있어, 단면의 Peak 각도·이득은 KPI 값과 약간 다를 수 있습니다.</li>
       <li><strong>3D 패턴:</strong> 2D 차트와 같은 계산값(앙각 2° × 방위 5° 격자)을 전체 최대 대비 상대 dB로 표시(-30 dB 하한). 와이어는 형태 확인용으로 축척을 따로 맞춰 겹쳐 그린 것입니다.</li>
@@ -368,25 +369,41 @@ const BAND_INFO = {
 const GROUND_INFO = {
   average:    { er: 13.0, sig: 0.005, name: "Average",    desc: "표준 대지. (εr=13, σ=0.005)" },
   salt_water: { er: 81.0, sig: 5.0,   name: "Salt Water", desc: "해안가/바닷물. 저각 복사에 유리 (εr=81, σ=5.0)" },
-  poor_rocky: { er: 3.0,  sig: 0.001, name: "Poor/Rocky", desc: "암석/얼어붙은 땅. 손실 증가 (εr=3, σ=0.001)" }
+  poor_rocky: { er: 13.0, sig: 0.002, name: "Poor",       desc: "암석·산악 지형. 손실 증가 (εr=13, σ=0.002)" }
 };
 
-// 이득(dBi) 계산 방식
-//  - 평균 지상고 0.3λ 이상: MININEC형 이득 (완전도체 대지 기준 입력 전력으로 정규화 → 반사 손실 반영)
-//  - 0.2λ 미만: 경험식 (MININEC형은 낮은 수평 와이어의 대지 근거리 손실을 계산하지 못함, EZNEC 매뉴얼)
+// 이득(dBi) 계산 — ARRL Antenna Book 21판 6-8쪽 Fig 14(80m 수평 반파장 다이폴, Average 대지, NEC 계산)
+// 높이별 이득 −7 / −0.4 / 6.7 / 6.6 dBi(0.0075 / 0.037 / 0.25 / 0.37λ)에 40m 수평 설치 결과가 맞도록 보정
+//  - 평균 지상고 0.2λ 미만: 방향성(실제 대지 반사 포함 원거리장) − 대지 근거리 손실
+//  - 0.3λ 이상: MININEC형 이득(완전도체 대지 기준 입력 전력으로 정규화 → 원거리 반사 손실 반영) + NEC 대비 보정
 //  - 0.2~0.3λ: 두 값을 부드럽게 연결
-// 대지별 상수는 0.25~0.6λ 구간에서 경험식 평균이 MININEC형과 같아지도록 맞춤
+// 대지 근거리 손실 기준점 [평균 지상고(λ), dB]: ln(높이)에 대해 선형 보간, 범위 밖은 끝값 유지
+const NEAR_GROUND_LOSS_DB = [
+  [0.0075, 13.84],
+  [0.037,   8.06],
+  [0.25,    0.39]
+];
 const GAIN_CAL = {
-  baseOffsetDb: 1.85,        // 기본 보정 (지향성 → 이득, 일반 대지 기준)
-  lowHeightSlopeDb: 5.5,     // 낮은 지상고 패널티 기울기 (dB / λ)
-  lowHeightLimit: 0.22,      // 이 높이(λ) 미만이면 패널티 적용
-  highHeightLossDb: 0.15,    // 충분히 높을 때 고정 손실 (도선 손실 등, MININEC형 이득에도 적용)
-  poorGroundExtraDb: 0.8,
-  saltWaterBonusDb: -1.7,
-  blendFromLambda: 0.2,      // 이 높이부터 MININEC형으로 전환 시작
-  blendToLambda: 0.3         // 이 높이 이상은 MININEC형만 사용
+  mininecToNecDb: 0.78,      // MININEC형 이득 → ARRL Fig 14(NEC) 이득 차이 (0.25λ·0.37λ 평균)
+  blendFromLambda: 0.2,
+  blendToLambda: 0.3
 };
 const PERFECT_GROUND = { RH: { re: -1, im: 0 }, RV: { re: 1, im: 0 } };
+const GROUND_LOSS_SCALE = { average: 1.0, poor_rocky: 1.15, salt_water: 0.15 };
+
+function nearGroundLossDb(hLambda) {
+  const T = NEAR_GROUND_LOSS_DB;
+  if (hLambda <= T[0][0]) return T[0][1];
+  if (hLambda >= T[T.length - 1][0]) return T[T.length - 1][1];
+  for (let i = 0; i < T.length - 1; i++) {
+    const [h0, l0] = T[i], [h1, l1] = T[i + 1];
+    if (hLambda <= h1) {
+      const t = Math.log(hLambda / h0) / Math.log(h1 / h0);
+      return l0 + t * (l1 - l0);
+    }
+  }
+  return T[T.length - 1][1];
+}
 
 const state = {
   band: "40m",
@@ -597,20 +614,15 @@ function compute3DRadiation(geo, freqMHz) {
   while (lobeHi < elProfile.length - 1 && elProfile[lobeHi + 1].db >= -1) lobeHi++;
   const toaRange = [elProfile[lobeLo].deg, elProfile[lobeHi].deg];
 
-  // --- 이득 (dBi): 방향성 - 경험적 보정 ---
+  // --- 이득 (dBi): 방향성 − 대지 근거리 손실 (ARRL Fig 14 기준 보정) ---
   const hLambda = geo.avgH / segData.wl;
-  let lossDb = hLambda < GAIN_CAL.lowHeightLimit
-    ? (GAIN_CAL.lowHeightLimit - hLambda) * GAIN_CAL.lowHeightSlopeDb
-    : GAIN_CAL.highHeightLossDb;
-  if (state.ground === "poor_rocky") lossDb += GAIN_CAL.poorGroundExtraDb;
-  if (state.ground === "salt_water") lossDb += GAIN_CAL.saltWaterBonusDb;
-
   const directivityDb = 10 * Math.log10(maxP / Math.max(1e-9, sumP / (4 * Math.PI)));
-  const empiricalDb = directivityDb - GAIN_CAL.baseOffsetDb - lossDb;
-  const mininecDb = 10 * Math.log10(maxP / Math.max(1e-12, sumPerfect / (4 * Math.PI))) - GAIN_CAL.highHeightLossDb;
+  const mininecDb = 10 * Math.log10(maxP / Math.max(1e-12, sumPerfect / (4 * Math.PI)));
+  const lowDb = directivityDb - nearGroundLossDb(hLambda) * GROUND_LOSS_SCALE[state.ground];
+  const highDb = mininecDb + GAIN_CAL.mininecToNecDb;
   const tBlend = clamp((hLambda - GAIN_CAL.blendFromLambda) / (GAIN_CAL.blendToLambda - GAIN_CAL.blendFromLambda), 0, 1);
   const w = tBlend * tBlend * (3 - 2 * tBlend);                    // smoothstep
-  const gainDbi = +(w * mininecDb + (1 - w) * empiricalDb).toFixed(1);
+  const gainDbi = +(w * highDb + (1 - w) * lowDb).toFixed(1);
 
   // --- 수평 단면 (주 발사각이 60°를 넘으면 60° 단면) ---
   const azCutElDeg = Math.min(bestElDeg, 60);
